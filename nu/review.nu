@@ -52,7 +52,7 @@ def tracker-marker [pr_number: string, sha: string] {
 
 # Find the existing tracking review for a PR (returns null if none).
 # Walks the page of reviews until it sees a body containing the tracker marker.
-def find-existing-review [
+export def find-existing-review [
   repo: string,
   pr_number: string,
 ] {
@@ -68,10 +68,19 @@ def find-existing-review [
   # Helper: scan one page of reviews, return the first tracker-marked review (or null).
   def scan-page [headers: list, url: string] {
     let resp = (try { http get -H $headers $url } catch { return null })
-    let items = if ($resp | describe) == 'list' { $resp } else { [$resp] }
+    # Nushell 0.113: http get with a JSON array returns a 'table<...>' type, not
+    # 'list<...>'. Both are iterable, so accept either.
+    let resp_type = ($resp | describe)
+    let items = if ($resp_type | str starts-with 'list') or ($resp_type | str starts-with 'table') {
+      $resp
+    } else if $resp == null {
+      return null
+    } else {
+      [$resp]
+    }
     if ($items | is-empty) { return null }
     let marked = ($items | where { |r| (($r | get -o body | default '') | str contains $TRACKER_MARKER_PREFIX) })
-    if ($marked | is-empty) { null } else { ($marked | first | upsert body ($marked | first | get -o body | default '')) }
+    if ($marked | is-empty) { null } else { ($marked | first) }
   }
 
   let page1 = (scan-page $headers $'($base_url)?per_page=($page_size)&page=1')
