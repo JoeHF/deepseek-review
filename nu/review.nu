@@ -562,7 +562,10 @@ export def --env deepseek-review [
     } else {
       let review_id = ($existing | get id)
       update-review-body $repo $pr_number $review_id $tracking_body
-      print $'✅ Code review finished！Tracking review updated on PR (ansi g)#($pr_number)(ansi reset) (review id: ($review_id)).'
+      [
+        $"✅ Code review finished！Tracking review updated on PR (ansi g)#($pr_number)(ansi reset)"
+        $"   (review id: ($review_id))"
+      ] | str join "\n" | print
     }
   } else {
     match $output_mode {
