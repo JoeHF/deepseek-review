@@ -265,18 +265,24 @@ export def parse-deepseek-findings [review: string, original_diff: string] {
 
 # Inject the structured-output instruction into the user-prompt so the model
 # emits a parseable FINDINGS: block alongside its free-form review.
-def inject-findings-instruction [user_prompt: string] {
-  let instructions = $'(char nl)(char nl)---(char nl)STRUCTURED OUTPUT (required for single-review mode):(char nl)After your human-readable review, append a `FINDINGS:` section where each line is EXACTLY in this format so the tool can track resolution across commits:(char nl)'
-  $'- <severity> `<file>:<line>` — <one-line problem> → <one-line fix>(char nl)'
-  let example = 'Example: `- high `nu/review.nu:120` — def --env deprecation warning → use with-env block`'
+export def inject-findings-instruction [user_prompt: string] {
+  # NOTE: Use plain string list concatenation here, NOT $'...' interpolation.
+  # Nushell 0.113 aggressively evaluates $(...) inside $'...' which breaks
+  # on tokens like "required" that look like commands. Building the prompt
+  # from a list of plain strings avoids the trap entirely.
   [
     $user_prompt
-    $instructions
-    $'- <severity> `<file>:<line>` — <one-line problem> → <one-line fix>'
-    $example
+    ''
+    '---'
+    'STRUCTURED OUTPUT (needed so the tool can track resolution across commits):'
+    'After your human-readable review, append a FINDINGS: section where each line is EXACTLY in this format:'
+    '- <severity> `<file>:<line>` — <one-line problem> → <one-line fix>'
+    ''
+    'Example: `- high `nu/review.nu:120` — def --env deprecation warning → use with-env block`'
     ''
     'Use severity ∈ {critical, high, med, low, info}.'
-    'Only include findings you can ground in a specific `path:line` from the diff. Do NOT list findings without a file:line anchor.'
+    'Only include findings you can ground in a specific path:line from the diff. Do NOT list findings without a file:line anchor.'
+    ''
   ] | str join "\n"
 }
 
