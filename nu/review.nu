@@ -562,9 +562,11 @@ export def --env deepseek-review [
     } else {
       let review_id = ($existing | get id)
       update-review-body $repo $pr_number $review_id $tracking_body
+      # Avoid parentheses that look like sub-expressions to Nushell's parser
+      # (e.g. "(review id: ...)" gets parsed as calling a command "review").
       [
         $"✅ Code review finished！Tracking review updated on PR (ansi g)#($pr_number)(ansi reset)"
-        $"   (review id: ($review_id))"
+        $"   id=($review_id)"
       ] | str join "\n" | print
     }
   } else {
