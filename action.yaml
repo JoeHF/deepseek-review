@@ -143,6 +143,6 @@ runs:
             --include $env.INCLUDE_PATTERNS_INPUT
             --exclude $env.EXCLUDE_PATTERNS_INPUT
             --comment $env.COMMENT_BODY_INPUT
-            --single-review ($env.SINGLE_REVIEW_INPUT | str downcase == 'true')
+            --single-review (($env.SINGLE_REVIEW_INPUT | str downcase) == 'true')
           )
         "
