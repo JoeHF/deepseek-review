@@ -361,7 +361,7 @@ def update-review-body [
   ]
   print $'Patching existing review: (ansi g)($url)(ansi reset)'
   try {
-    let response = http patch -e -f -t application/json -H $headers $url { body: $new_body }
+    let response = http put -e -f -t application/json -H $headers $url { body: $new_body }
     let status = $response | get -o status | default 0
     if $status >= 200 and $status < 300 {
       print $'Review updated successfully! HTTP (ansi g)($status)(ansi reset)'
