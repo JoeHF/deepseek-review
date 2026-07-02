@@ -160,7 +160,11 @@ export def parse-tracking-body [body: string] {
 #   resolved  - was in old, not in new (the diff no longer mentions it)
 #   still_open - was in old, still in new
 #   new_issues - was not in old, is in new
-def finding-key [f: record] { $'($f.file):($f.line)' }
+# Use file:severity:message prefix as stable key (line numbers shift when code changes)
+def finding-key [f: record] {
+  let msg = ($f.message? | default '' | str trim | str substring 0..80)
+  $'($f.file):($f.severity):($msg)'
+}
 
 export def reconcile-findings [old_findings: list, new_findings: list] {
   let old_keys = ($old_findings | each { |f| (finding-key $f) })
@@ -553,8 +557,16 @@ export def --env deepseek-review [
     )
     let update_count = (($old_findings | length) + 1)   # rough: increment each run
     let reconciled = (reconcile-findings $old_findings $new_findings)
-    # Latest commit SHA comes from env var (set by action.yaml from github.event.head_sha)
-    let latest_sha = ($env.HEAD_SHA? | default '')
+    # Latest commit SHA comes from env var (set by action.yaml); fallback to PR API if empty
+    let latest_sha = try {
+      let from_env = ($env.HEAD_SHA? | default '')
+      if ($from_env | is-not-empty) { $from_env } else {
+        let pr_api_url = $'($GITHUB_API_BASE)/repos/($repo)/pulls/($pr_number)'
+        let auth_header = [Authorization $'Bearer ($env.GH_TOKEN_INPUT)' Accept application/vnd.github.v3+json]
+        let pr_data = (http get -H $auth_header $pr_api_url)
+        $pr_data.head.sha? | default ''
+      }
+    } catch { '' }
     let tracking_body = (build-tracking-body $pr_number $latest_sha $update_count $reconciled)
     if $existing == null {
       submit-review-to-pr $repo $pr_number $tracking_body
