@@ -562,7 +562,8 @@ export def --env deepseek-review [
       let from_env = ($env.HEAD_SHA? | default '')
       if ($from_env | is-not-empty) { $from_env } else {
         let pr_api_url = $'($GITHUB_API_BASE)/repos/($repo)/pulls/($pr_number)'
-        let pr_data = (http get -H $DIFF_HEADER $pr_api_url)
+        let auth_header = [Authorization $'Bearer ($env.GH_TOKEN_INPUT)' Accept application/vnd.github.v3+json]
+        let pr_data = (http get -H $auth_header $pr_api_url)
         $pr_data.head.sha? | default ''
       }
     } catch { '' }
