@@ -103,9 +103,12 @@ export def find-existing-review [
 #   { sha, findings: list<{severity, file, line, message, suggestion}> }
 # Findings are parsed from the per-finding markdown list items.
 export def parse-tracking-body [body: string] {
+  # Strip ANSI escape codes that interfere with finding line parsing.
+  # The review body contains color codes like \x1b[0m, \x1b[92m, etc.
+  let clean_body = ($body | str replace --regex '\x1b\[[0-9;]*m' '')
   # Pattern: capture the SHA from `<!-- dsr-tracker:pr=... sha=<SHA> updated=... -->`
   let sha_pattern = '<!-- dsr-tracker:pr=\S+ sha=(\S+)'
-  let sha_match = ($body | parse --regex $sha_pattern)
+  let sha_match = ($clean_body | parse --regex $sha_pattern)
   let sha = if ($sha_match | is-empty) { '' } else { ($sha_match | first | get capture0) }
 
   # Parse findings from our own generated body. Each finding line looks like:
@@ -113,7 +116,7 @@ export def parse-tracking-body [body: string] {
   # We split on " — " first (which separates severity+location from message),
   # then split the prefix on " `" to get severity and `path:line`.
   mut findings = []
-  for line in ($body | lines) {
+  for line in ($clean_body | lines) {
     let trimmed = ($line | str trim)
     # Only consider lines that look like findings (start with "- <severity>")
     if not ($trimmed | str starts-with '- ') { continue }
