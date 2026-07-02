@@ -182,7 +182,7 @@ export def reconcile-findings [old_findings: list, new_findings: list] {
 export def format-finding [f: record] {
   let loc = if ($f.line | default 0) > 0 { $'`($f.file):($f.line)`' } else { $'`($f.file)`' }
   let suggestion = if ($f.suggestion | default '') == '' { '' } else { $'  → ($f.suggestion)' }
-  $'- ($f.severity) `($loc)` — ($f.message)($suggestion)'
+  $'- ($f.severity) ($loc) — ($f.message)($suggestion)'
 }
 
 export def build-tracking-body [
