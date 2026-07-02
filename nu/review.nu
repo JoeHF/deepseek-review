@@ -182,7 +182,7 @@ export def reconcile-findings [old_findings: list, new_findings: list] {
 export def format-finding [f: record] {
   let loc = if ($f.line | default 0) > 0 { $'`($f.file):($f.line)`' } else { $'`($f.file)`' }
   let suggestion = if ($f.suggestion | default '') == '' { '' } else { $'  → ($f.suggestion)' }
-  $'- ($f.severity) (ansi reset)($loc)(ansi reset) — ($f.message)(ansi reset)($suggestion)'
+  $'- ($f.severity) `($loc)` — ($f.message)($suggestion)'
 }
 
 export def build-tracking-body [
@@ -197,7 +197,7 @@ export def build-tracking-body [
 
   let marker = (tracker-marker $pr_number $latest_sha)
   let sha_short = if ($latest_sha | str length) > 0 { ($latest_sha | str substring 0..6) } else { 'no-sha' }
-  let title = $"## 🤖 AI Code Review — update #($update_count)  ·  SHA: (ansi reset)($sha_short)(ansi reset)"
+  let title = $"## 🤖 AI Code Review — update #($update_count)  ·  SHA: ($sha_short)"
 
   [
     $marker
