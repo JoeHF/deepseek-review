@@ -91,7 +91,7 @@ runs:
         REPO_INPUT: ${{ github.repository }}
         ALLOWED_ASSOCIATIONS_INPUT: ${{ inputs.allowed-associations }}
         SINGLE_REVIEW_INPUT: ${{ inputs.single-review }}
-        HEAD_SHA: ${{ github.head_sha }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha || github.head_sha }}
       run: |
         let event = (open $env.GITHUB_EVENT_PATH)
         let pr = $event.pull_request?.number? | default $event.issue?.number? | default '' | into string
